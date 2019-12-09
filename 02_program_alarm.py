@@ -1,5 +1,5 @@
 from itertools import combinations
-from utils.file_parser import lines_in
+from utils.cli import lines_in
 from utils.intcode import IntcodeComputer
 
 tape = IntcodeComputer(lines_in)

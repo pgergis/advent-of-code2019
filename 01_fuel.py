@@ -11,7 +11,7 @@ def get_fuel_required_extra(mass):
 
 
 if __name__ == '__main__':
-    from utils.file_parser import lines_in
+    from utils.cli import lines_in
 
     module_masses = list(map(int, lines_in))
     print(sum(map(get_fuel_required, module_masses)))
