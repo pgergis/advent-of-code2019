@@ -48,7 +48,7 @@ def stepsToPoint(point: Point, path: [Point]) -> int:
 
 
 if __name__ == "__main__":
-    from utils.file_parser import lines_in
+    from utils.cli import lines_in
 
     assert len(lines_in) == 2
 
