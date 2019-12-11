@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 OPCODE_LENGTH = 2
 
 
@@ -12,7 +11,7 @@ class ParameterMode(Enum):
 
 
 class IntcodeComputer:
-    def __init__(self, input_lines):
+    def __init__(self, input_lines: list):
         self.input_str = input_lines[0]
 
         self.registers = IntcodeComputer.initialize_tape(self.input_str) + [0] * 10000
@@ -41,7 +40,6 @@ class IntcodeComputer:
             else:
                 raise TypeError("Undefined ParameterMode!?")
             params.append(param_val)
-            # print(p_mode, val_at_pointer, param_val)
 
         return fn(*params, self)
 
@@ -51,8 +49,6 @@ class IntcodeComputer:
 
     def run(self, reset=True):
         while (instruction := Instruction(str(self.getVal(self.ptr)))) :
-            # print(self.relative_base, self.ptr)
-            # print(self.registers[max(self.ptr-10,0):self.ptr+10])
             if instruction.opcode == Instruction.TERMINATE_CODE:
                 break
             self.ptr = self.performInstruction(instruction.fn, instruction.param_modes)
@@ -69,63 +65,73 @@ class IntcodeComputer:
 
     @staticmethod
     def opcode_add(x, y, dest, tape):
-        # print("adding", x, y, dest)
         tape.setVal(dest, x + y)
         return tape.ptr + 1
 
     @staticmethod
     def opcode_mult(x, y, dest, tape):
-        # print("multiplying", x, y, dest)
         tape.setVal(dest, x * y)
         return tape.ptr + 1
 
     @staticmethod
     def opcode_output(val, tape):
-        # print("outputting", val)
-        print(val)
+        IntcodeComputer.write_external_output(val, tape)
         return tape.ptr + 1
 
     @staticmethod
     def opcode_input(dest, tape):
-        val_in = int(input("taking input: "))
+        val_in = int(IntcodeComputer.get_external_input(tape))
         tape.setVal(dest, val_in)
         return tape.ptr + 1
 
     @staticmethod
     def opcode_jump_if_true(p, jump_to, tape):
-        # print(f"jumping to {jump_to} if {p}")
         if p:
             return jump_to
         return tape.ptr + 1
 
     @staticmethod
     def opcode_jump_if_false(p, jump_to, tape):
-        # print(f"jumping to {jump_to} if NOT {p}")
         if not p:
             return jump_to
         return tape.ptr + 1
 
     @staticmethod
     def opcode_less_than(a, b, dest, tape):
-        # print(f"setting {dest} to {a} < {b}")
         tape.setVal(dest, int(a < b))
         return tape.ptr + 1
 
     @staticmethod
     def opcode_eq(a, b, dest, tape):
-        # print(f"setting {dest} to {a} == {b}")
         tape.setVal(dest, int(a == b))
         return tape.ptr + 1
 
     @staticmethod
     def opcode_adjust_relative_base(base_mod, tape):
-        # print("adjusting relative base by", base_mod)
         tape.relative_base += base_mod
         return tape.ptr + 1
 
     @staticmethod
     def initialize_tape(input_str):
         return list(map(int, input_str.split(",")))
+
+    @staticmethod
+    def get_external_input(tape):
+        if (io_buffer := getattr(tape, "io_buffer")):
+            return io_buffer.pop()
+        return input("taking input: ")
+
+    @staticmethod
+    def write_external_output(output, tape):
+        if (io_buffer := getattr(tape, "io_buffer")) is not None:
+            orig_next = None
+            if io_buffer:
+                orig_next = io_buffer.pop()
+            io_buffer.append(output)
+            if orig_next is not None:
+                io_buffer.append(orig_next)
+        else:
+            print(output)
 
 
 class Instruction:
@@ -144,7 +150,6 @@ class Instruction:
     }
 
     def __init__(self, instruction):
-        # print(instruction)
         op_in, params_in = (
             instruction[-OPCODE_LENGTH:],
             instruction[:-OPCODE_LENGTH].zfill(1),
@@ -158,9 +163,6 @@ class Instruction:
                 params_in.zfill(len(default_param_modes)), default_param_modes
             )
         ]
-        # set_params = "{:b}".format(
-        #     int(params_in, base=2) | int(default_param_modes, base=2)
-        # ).zfill(len(default_param_modes))
         self.param_modes = [ParameterMode(p) for p in set_params]
 
     def getFnForOpcode(self):
