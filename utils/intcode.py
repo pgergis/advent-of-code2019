@@ -24,7 +24,7 @@ class IntcodeComputer:
     def setVal(self, address, val):
         self.registers[address] = val
 
-    def performInstruction(self, fn, param_modes):
+    def _set_params(self, param_modes):
         params = []
         for p_mode in param_modes[::-1]:
             self.ptr += 1
@@ -41,6 +41,8 @@ class IntcodeComputer:
                 raise TypeError("Undefined ParameterMode!?")
             params.append(param_val)
 
+    def performInstruction(self, fn, param_modes):
+        params = self._set_params(param_modes)
         return fn(*params, self)
 
     def reset(self):
