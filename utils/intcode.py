@@ -11,8 +11,9 @@ class ParameterMode(Enum):
 
 
 class IntcodeComputer:
-    def __init__(self, input_lines: list):
+    def __init__(self, input_lines: list, io_buffer=None):
         self.input_str = input_lines[0]
+        self.io_buffer = io_buffer
 
         self.registers = IntcodeComputer.initialize_tape(self.input_str) + [0] * 10000
         self.ptr = 0
@@ -40,6 +41,7 @@ class IntcodeComputer:
             else:
                 raise TypeError("Undefined ParameterMode!?")
             params.append(param_val)
+        return params
 
     def performInstruction(self, fn, param_modes):
         params = self._set_params(param_modes)
@@ -52,7 +54,7 @@ class IntcodeComputer:
     def run(self, halt_on_output=False):
         while (instruction := Instruction(str(self.getVal(self.ptr)))) :
             if instruction.opcode == Instruction.TERMINATE_CODE:
-                self.reset()
+                # self.reset()
                 break
 
             self.ptr = self.performInstruction(instruction.fn, instruction.param_modes)
@@ -165,13 +167,13 @@ class Instruction:
 
     @staticmethod
     def get_external_input(tape):
-        if (io_buffer := getattr(tape, "io_buffer")) :
-            return io_buffer.pop()
+        if tape.io_buffer:
+            return tape.io_buffer.pop()
         return input("taking input: ")
 
     @staticmethod
     def write_external_output(output, tape):
-        if (io_buffer := getattr(tape, "io_buffer")) is not None:
-            io_buffer.append(output)
+        if tape.io_buffer is not None:
+            tape.io_buffer.append(output)
         else:
             print(output)
